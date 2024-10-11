@@ -28,6 +28,8 @@ const {
   WG_ENABLE_ONE_TIME_LINKS,
 } = require('../config');
 
+const wgeConf = path.join(WG_PATH, 'wge.conf');
+
 module.exports = class WireGuard {
 
   async __buildConfig() {
@@ -71,8 +73,8 @@ module.exports = class WireGuard {
       const config = await this.__buildConfig();
 
       await this.__saveConfig(config);
-      await Util.exec('wg-quick down wge').catch(() => {});
-      await Util.exec('wg-quick up wge').catch((err) => {
+      await Util.exec(`wg-quick down ${wgeConf}`).catch(() => {});
+      await Util.exec(`wg-quick up ${wgeConf}`).catch((err) => {
         if (err && err.message && err.message.includes('Cannot find device "wge"')) {
           throw new Error('WireGuard exited with the error: Cannot find device "wge"\nThis usually means that your host\'s kernel does not support WireGuard!');
         }
@@ -135,7 +137,7 @@ ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
 
   async __syncConfig() {
     debug('Config syncing...');
-    await Util.exec('wg syncconf wge <(wg-quick strip wge)');
+    await Util.exec(`wg syncconf wge <(wg-quick strip ${wgeConf})`);
     debug('Config synced.');
   }
 
@@ -397,7 +399,7 @@ Endpoint = ${WG_HOST}:${WG_CONFIG_PORT}`;
 
   // Shutdown wireguard
   async Shutdown() {
-    await Util.exec('wg-quick down wge').catch(() => {});
+    await Util.exec(`wg-quick down ${wge}`).catch(() => {});
   }
 
   async cronJobEveryMinute() {
