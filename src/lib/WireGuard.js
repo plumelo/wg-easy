@@ -399,7 +399,7 @@ Endpoint = ${WG_HOST}:${WG_CONFIG_PORT}`;
 
   // Shutdown wireguard
   async Shutdown() {
-    await Util.exec(`wg-quick down ${wge}`).catch(() => {});
+    await Util.exec(`wg-quick down ${wgeConf}`).catch(() => {});
   }
 
   async cronJobEveryMinute() {
