@@ -398,7 +398,7 @@ module.exports = class Server {
       }));
 
     // Static assets
-    const publicDir = '/app/www';
+    const publicDir = './www';
     app.use(
       defineEventHandler((event) => {
         return serveStatic(event, {
