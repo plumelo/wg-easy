@@ -39,7 +39,7 @@ module.exports = class WireGuard {
       debug('Loading configuration...');
       let config;
       try {
-        config = await fs.readFile(path.join(WG_PATH, 'wg0.json'), 'utf8');
+        config = await fs.readFile(path.join(WG_PATH, 'wge.json'), 'utf8');
         config = JSON.parse(config);
         debug('Configuration loaded.');
       } catch (err) {
@@ -71,18 +71,18 @@ module.exports = class WireGuard {
       const config = await this.__buildConfig();
 
       await this.__saveConfig(config);
-      await Util.exec('wg-quick down wg0').catch(() => {});
-      await Util.exec('wg-quick up wg0').catch((err) => {
-        if (err && err.message && err.message.includes('Cannot find device "wg0"')) {
-          throw new Error('WireGuard exited with the error: Cannot find device "wg0"\nThis usually means that your host\'s kernel does not support WireGuard!');
+      await Util.exec('wg-quick down wge').catch(() => {});
+      await Util.exec('wg-quick up wge').catch((err) => {
+        if (err && err.message && err.message.includes('Cannot find device "wge"')) {
+          throw new Error('WireGuard exited with the error: Cannot find device "wge"\nThis usually means that your host\'s kernel does not support WireGuard!');
         }
 
         throw err;
       });
       // await Util.exec(`iptables -t nat -A POSTROUTING -s ${WG_DEFAULT_ADDRESS.replace('x', '0')}/24 -o ' + WG_DEVICE + ' -j MASQUERADE`);
       // await Util.exec('iptables -A INPUT -p udp -m udp --dport 51820 -j ACCEPT');
-      // await Util.exec('iptables -A FORWARD -i wg0 -j ACCEPT');
-      // await Util.exec('iptables -A FORWARD -o wg0 -j ACCEPT');
+      // await Util.exec('iptables -A FORWARD -i wge -j ACCEPT');
+      // await Util.exec('iptables -A FORWARD -o wge -j ACCEPT');
       await this.__syncConfig();
     }
 
@@ -124,10 +124,10 @@ ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
     }
 
     debug('Config saving...');
-    await fs.writeFile(path.join(WG_PATH, 'wg0.json'), JSON.stringify(config, false, 2), {
+    await fs.writeFile(path.join(WG_PATH, 'wge.json'), JSON.stringify(config, false, 2), {
       mode: 0o660,
     });
-    await fs.writeFile(path.join(WG_PATH, 'wg0.conf'), result, {
+    await fs.writeFile(path.join(WG_PATH, 'wge.conf'), result, {
       mode: 0o600,
     });
     debug('Config saved.');
@@ -135,7 +135,7 @@ ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
 
   async __syncConfig() {
     debug('Config syncing...');
-    await Util.exec('wg syncconf wg0 <(wg-quick strip wg0)');
+    await Util.exec('wg syncconf wge <(wg-quick strip wge)');
     debug('Config synced.');
   }
 
@@ -164,7 +164,7 @@ ${client.preSharedKey ? `PresharedKey = ${client.preSharedKey}\n` : ''
     }));
 
     // Loop WireGuard status
-    const dump = await Util.exec('wg show wg0 dump', {
+    const dump = await Util.exec('wg show wge dump', {
       log: false,
     });
     dump
@@ -397,7 +397,7 @@ Endpoint = ${WG_HOST}:${WG_CONFIG_PORT}`;
 
   // Shutdown wireguard
   async Shutdown() {
-    await Util.exec('wg-quick down wg0').catch(() => {});
+    await Util.exec('wg-quick down wge').catch(() => {});
   }
 
   async cronJobEveryMinute() {
@@ -448,24 +448,24 @@ Endpoint = ${WG_HOST}:${WG_CONFIG_PORT}`;
       if (client.endpoint !== null) {
         wireguardConnectedPeersCount++;
       }
-      wireguardSentBytes += `wireguard_sent_bytes{interface="wg0",enabled="${client.enabled}",address="${client.address}",name="${client.name}"} ${Number(client.transferTx)}\n`;
-      wireguardReceivedBytes += `wireguard_received_bytes{interface="wg0",enabled="${client.enabled}",address="${client.address}",name="${client.name}"} ${Number(client.transferRx)}\n`;
-      wireguardLatestHandshakeSeconds += `wireguard_latest_handshake_seconds{interface="wg0",enabled="${client.enabled}",address="${client.address}",name="${client.name}"} ${client.latestHandshakeAt ? (new Date().getTime() - new Date(client.latestHandshakeAt).getTime()) / 1000 : 0}\n`;
+      wireguardSentBytes += `wireguard_sent_bytes{interface="wge",enabled="${client.enabled}",address="${client.address}",name="${client.name}"} ${Number(client.transferTx)}\n`;
+      wireguardReceivedBytes += `wireguard_received_bytes{interface="wge",enabled="${client.enabled}",address="${client.address}",name="${client.name}"} ${Number(client.transferRx)}\n`;
+      wireguardLatestHandshakeSeconds += `wireguard_latest_handshake_seconds{interface="wge",enabled="${client.enabled}",address="${client.address}",name="${client.name}"} ${client.latestHandshakeAt ? (new Date().getTime() - new Date(client.latestHandshakeAt).getTime()) / 1000 : 0}\n`;
     }
 
     let returnText = '# HELP wg-easy and wireguard metrics\n';
 
     returnText += '\n# HELP wireguard_configured_peers\n';
     returnText += '# TYPE wireguard_configured_peers gauge\n';
-    returnText += `wireguard_configured_peers{interface="wg0"} ${Number(wireguardPeerCount)}\n`;
+    returnText += `wireguard_configured_peers{interface="wge"} ${Number(wireguardPeerCount)}\n`;
 
     returnText += '\n# HELP wireguard_enabled_peers\n';
     returnText += '# TYPE wireguard_enabled_peers gauge\n';
-    returnText += `wireguard_enabled_peers{interface="wg0"} ${Number(wireguardEnabledPeersCount)}\n`;
+    returnText += `wireguard_enabled_peers{interface="wge"} ${Number(wireguardEnabledPeersCount)}\n`;
 
     returnText += '\n# HELP wireguard_connected_peers\n';
     returnText += '# TYPE wireguard_connected_peers gauge\n';
-    returnText += `wireguard_connected_peers{interface="wg0"} ${Number(wireguardConnectedPeersCount)}\n`;
+    returnText += `wireguard_connected_peers{interface="wge"} ${Number(wireguardConnectedPeersCount)}\n`;
 
     returnText += '\n# HELP wireguard_sent_bytes Bytes sent to the peer\n';
     returnText += '# TYPE wireguard_sent_bytes counter\n';
