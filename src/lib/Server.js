@@ -398,7 +398,7 @@ module.exports = class Server {
       }));
 
     // Static assets
-    const publicDir = resolve(__dirname. '../www');
+    const publicDir = resolve(__dirname, '../www');
     console.warn('publicDir', publicDir)
     app.use(
       defineEventHandler((event) => {
